@@ -38,6 +38,9 @@ from rsrd.extras.cam_helpers import (
     get_vid_frame,
 )
 from rsrd.extras.viser_rsrd import ViserRSRD
+from scipy.spatial.transform import Rotation as R
+
+from typing import Tuple, Dict, List
 
 torch.set_float32_matmul_precision("high")
 
@@ -246,6 +249,59 @@ def render_video(
         render = (render * 0.8 + rgb * 0.2).astype(np.uint8)
         renders.append(render)
     return renders
+
+
+def estimate_joint_single(se3: np.ndarray) -> Dict[str, Dict[str, np.ndarray]]:
+    rotation = se3[:4]
+    translation = se3[4:]
+
+    result = {}
+    joint_rotvec = R.from_matrix(rotation.T).as_rotvec()
+    revolute_joint_axis = joint_rotvec / np.linalg.norm(joint_rotvec)
+    revolute_value = np.linalg.norm(joint_rotvec)
+    det = np.linalg.det(np.eye(3) - rotation)
+    valid = True
+    try:
+        revolute_joint_pos = np.linalg.inv(np.eye(3) - rotation) @ translation
+        revolute_joint_pos = revolute_joint_pos - np.dot(revolute_joint_pos, revolute_joint_axis) * revolute_joint_axis
+    except:
+        det = 0
+        revolute_joint_pos = np.zeros(3)
+        valid = False
+    if abs(det) < 1e-17:
+        print("angle too small!")
+        valid = False
+    result["revolute"] = {"axis": revolute_joint_axis, "pos": revolute_joint_pos, "value": revolute_value, "det": det, "valid": valid}
+
+    prismatic_joint_axis = translation / np.linalg.norm(translation)
+    prismatic_joint_pos = np.zeros(3)
+    prismatic_value = np.linalg.norm(translation)
+    result["prismatic"] = {"axis": prismatic_joint_axis, "pos": prismatic_joint_pos, "value": prismatic_value, "valid": True}
+
+    return result
+
+
+def estimate_joint_all(result_list: List[Dict[str, Dict[str, np.ndarray]]]) -> Tuple[Dict[str, Dict[str, np.ndarray]], str]:
+    revolute_joint_axis = 0
+    prismatic_joint_axis = 0
+    revolute_joint_pos = 0
+    joint_type_vote = 0
+    for index, result in enumerate(result_list):
+        if result["revolute"]["value"] > 0.1:
+            joint_type_vote += 1
+        else:
+            joint_type_vote -= 1
+    if joint_type_vote > 0:
+        pred_joint_type = "revolute"
+    elif joint_type_vote < 0:
+        pred_joint_type = "prismatic"
+    
+    prismatic_joint_axis = prismatic_joint_axis / np.linalg.norm(prismatic_joint_axis)
+    prismatic_joint_pos = np.zeros(3)
+    pred_joint_metrics = {"revolute": {"axis": revolute_joint_axis, "pos": revolute_joint_pos}, 
+                            "prismatic": {"axis": prismatic_joint_axis, "pos": prismatic_joint_pos},}
+    
+    return pred_joint_metrics, pred_joint_type
     
 
 # But this should _really_ be in the rigid optimizer.
