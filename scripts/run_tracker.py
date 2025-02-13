@@ -254,16 +254,17 @@ def render_video(
 
 def estimate_joint_single(se3: np.ndarray) -> Dict[str, Dict[str, np.ndarray]]:
     rotation = se3[:4]
+    rotation_matrix = R.from_quat(rotation, scalar_first=True).as_matrix()
     translation = se3[4:]
 
     result = {}
     joint_rotvec = R.from_quat(rotation, scalar_first=True).as_rotvec()
     revolute_joint_axis = joint_rotvec / np.linalg.norm(joint_rotvec)
     revolute_value = np.linalg.norm(joint_rotvec)
-    det = np.linalg.det(np.eye(3) - rotation)
+    det = np.linalg.det(np.eye(3) - rotation_matrix)
     valid = True
     try:
-        revolute_joint_pos = np.linalg.inv(np.eye(3) - rotation) @ translation
+        revolute_joint_pos = np.linalg.inv(np.eye(3) - rotation_matrix) @ translation
         revolute_joint_pos = revolute_joint_pos - np.dot(revolute_joint_pos, revolute_joint_axis) * revolute_joint_axis
     except:
         det = 0
@@ -371,8 +372,8 @@ def track_and_save_motion(
     optimizer.fit(list(range(num_frames)), 50)
     logger.info("Finished temporal smoothing.")
 
-    part_deltas = optimizer.part_deltas.detach().cpu().numpy()
-    pred_joint_metrics, pred_joint_type = estimate_joint(part_deltas)
+    # part_deltas = optimizer.part_deltas.detach().cpu().numpy()
+    # pred_joint_metrics, pred_joint_type = estimate_joint(part_deltas)
 
     # Save part trajectories.
     optimizer.save_tracks(track_data_path)
