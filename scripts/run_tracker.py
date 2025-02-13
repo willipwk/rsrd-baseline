@@ -127,7 +127,7 @@ def main(
     # Generate + load keyframes.
     camopt_render_path = output_dir / "camopt_render.mp4"
     frame_opt_path = output_dir / "frame_opt.mp4"
-    track_data_path = output_dir / "keyframes.txt"
+    track_data_path = output_dir / "keyframes.json"
     if not track_data_path.exists():
         track_and_save_motion(
             optimizer,
