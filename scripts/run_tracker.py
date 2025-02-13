@@ -306,6 +306,9 @@ def estimate_joint_all(result_list: List[Dict[str, Dict[str, np.ndarray]]]) -> T
 
 
 def estimate_joint(se3: np.ndarray) -> Tuple[Dict[str, Dict[str, np.ndarray]], str]:
+    displace = np.linalg.norm(se3[0, :, 4:] - se3[-1, :, 4:], axis=1)
+    moving_index = np.argmax(displace)
+    se3 = se3[:, moving_index, :]
     result_list = []
     for frame_id in range(se3.shape[0]):
         result = estimate_joint_single(se3[frame_id])
@@ -356,8 +359,6 @@ def track_and_save_motion(
         if save_hand:
             optimizer.detect_hands(frame_id)
 
-    # part_deltas = optimizer.part_deltas.detach().cpu().numpy()
-    # pred_joint_metrics, pred_joint_type = estimate_joint(part_deltas)
     
     # Save a pre-smoothing video
     renders = render_video(optimizer, motion_clip, num_frames)
@@ -369,6 +370,9 @@ def track_and_save_motion(
     logger.info("Performing temporal smoothing...")
     optimizer.fit(list(range(num_frames)), 50)
     logger.info("Finished temporal smoothing.")
+
+    part_deltas = optimizer.part_deltas.detach().cpu().numpy()
+    pred_joint_metrics, pred_joint_type = estimate_joint(part_deltas)
 
     # Save part trajectories.
     optimizer.save_tracks(track_data_path)
