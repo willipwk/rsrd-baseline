@@ -266,7 +266,9 @@ class PosedObservation:
         return xmin, xmax, ymin, ymax
 
     def compute_and_set_roi(self, optimizer):
-        roi = self.compute_roi(optimizer)
+        # roi = self.compute_roi(optimizer)
+        # print(roi)
+        roi = (0, 1, 0, 1)
         self.set_roi(*roi)
 
 

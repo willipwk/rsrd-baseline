@@ -99,7 +99,8 @@ class RigidGroupOptimizer:
         self.dino_loader = pipeline.datamanager.dino_dataloader
 
         assert pipeline.datamanager.train_dataset is not None
-        self.dataset_scale = pipeline.datamanager.train_dataset._dataparser_outputs.dataparser_scale
+        # self.dataset_scale = pipeline.datamanager.train_dataset._dataparser_outputs.dataparser_scale
+        self.dataset_scale = 1.0
         self.render_lock = render_lock
 
         k = self.config.blur_kernel_size
@@ -184,6 +185,7 @@ class RigidGroupOptimizer:
 
         # Initial guess for 3D object location.
         est_dist_to_obj = self.config.approx_dist_to_obj * self.dataset_scale  # scale to nerfstudio world.
+        print(self.dataset_scale)
         xs, ys, est_loc_2d = self._find_object_pixel_location(first_obs)
         ray = first_obs.frame.camera.generate_rays(0, est_loc_2d)
         est_loc_3d = ray.origins + ray.directions * est_dist_to_obj

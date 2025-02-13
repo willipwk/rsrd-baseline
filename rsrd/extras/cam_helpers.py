@@ -23,6 +23,18 @@ class CameraIntr:
 
 
 @dataclass
+class SapienIntr(CameraIntr):
+    # TODO(cmk) get iphone model.
+    name: str = "sapien"
+    fx: float = 761.1827392578125
+    fy: float = 761.1827392578125
+    cx: float = 320.0
+    cy: float = 240.0
+    width: int = 640
+    height: int = 480
+
+
+@dataclass
 class IPhoneIntr(CameraIntr):
     # TODO(cmk) get iphone model.
     name: str = "iphone"

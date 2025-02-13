@@ -34,6 +34,7 @@ from rsrd.motion.atap_loss import ATAPConfig
 from rsrd.extras.cam_helpers import (
     CameraIntr,
     IPhoneIntr,
+    SapienIntr,
     get_ns_camera_at_origin,
     get_vid_frame,
 )
@@ -50,7 +51,7 @@ def main(
     is_obj_jointed: Optional[bool] = None,
     dig_config_path: Optional[Path] = None,
     video_path: Optional[Path] = None,
-    camera_intr_type: CameraIntr = IPhoneIntr(),
+    camera_intr_type: CameraIntr = SapienIntr(),
     save_hand: bool = True,
 ):
     """Track objects in video using RSRD.
@@ -355,8 +356,8 @@ def track_and_save_motion(
         if save_hand:
             optimizer.detect_hands(frame_id)
 
-    part_deltas = optimizer.part_deltas.detach().cpu().numpy()
-    pred_joint_metrics, pred_joint_type = estimate_joint(part_deltas)
+    # part_deltas = optimizer.part_deltas.detach().cpu().numpy()
+    # pred_joint_metrics, pred_joint_type = estimate_joint(part_deltas)
     
     # Save a pre-smoothing video
     renders = render_video(optimizer, motion_clip, num_frames)
