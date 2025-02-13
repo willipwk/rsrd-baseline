@@ -256,7 +256,7 @@ def estimate_joint_single(se3: np.ndarray) -> Dict[str, Dict[str, np.ndarray]]:
     translation = se3[4:]
 
     result = {}
-    joint_rotvec = R.from_matrix(rotation.T).as_rotvec()
+    joint_rotvec = R.from_quat(rotation, scalar_first=True).as_rotvec()
     revolute_joint_axis = joint_rotvec / np.linalg.norm(joint_rotvec)
     revolute_value = np.linalg.norm(joint_rotvec)
     det = np.linalg.det(np.eye(3) - rotation)
@@ -302,6 +302,14 @@ def estimate_joint_all(result_list: List[Dict[str, Dict[str, np.ndarray]]]) -> T
                             "prismatic": {"axis": prismatic_joint_axis, "pos": prismatic_joint_pos},}
     
     return pred_joint_metrics, pred_joint_type
+
+
+def estimate_joint(se3: np.ndarray) -> Tuple[Dict[str, Dict[str, np.ndarray]], str]:
+    result_list = []
+    for frame_id in range(se3.shape[0]):
+        result = estimate_joint_single(se3[frame_id])
+        result_list.append(result)
+    return estimate_joint_all(result_list)
     
 
 # But this should _really_ be in the rigid optimizer.
@@ -346,6 +354,9 @@ def track_and_save_motion(
 
         if save_hand:
             optimizer.detect_hands(frame_id)
+
+    part_deltas = optimizer.part_deltas.detach().cpu().numpy()
+    pred_joint_metrics, pred_joint_type = estimate_joint(part_deltas)
     
     # Save a pre-smoothing video
     renders = render_video(optimizer, motion_clip, num_frames)
