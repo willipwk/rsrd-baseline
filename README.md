@@ -1,6 +1,6 @@
 <h1 align="left">
     <img alt="rsrd logo" src="https://robot-see-robot-do.github.io/data/favicon.png" width="auto" height="30" />
-    Robot See Robot Do
+    Robot See Robot Do - Baseline
     <img alt="rsrd logo" src="https://robot-see-robot-do.github.io/data/favicon.png" width="auto" height="30" />
 </h1>
 
@@ -28,17 +28,20 @@ Please make sure you `pip` install RSRD before submodules, as it installs some d
 cd dependencies/ 
 pip install -e dig -e garfield -e raftstereo -e hamer_helper -e jaxls -e jaxmp
 ``` 
-### Hand Detection (Optional for 4D-DPM)
-If you would like to run the full pipeline with robot motion planning or visualize hand detections, you need to install [HaMeR](https://github.com/geopavlakos/hamer). Please follow the instructions there for how to do this! (it involves downloading model weights).
+
+For `jaxmp`, go to the directory and change the python version in `pyproject.toml`. I use python=3.10.
+
+For `dig`, in `dig/data/utils/dino_dataloader.py`, add the code below after line 70:
+```python
+if image_list.shape[1] == 4:
+    image_list = image_list[:, :3, :, :]
+```
 
 ### Testing the install
 To catch most install issues, after installation you should be able to run `ns-train garfield -h` and `ns-train dig -h` and see a formatted help output of the two training pipelines.
 
 ## Running 4D-DPM
 We have published data to reproduce the paper results [on our site]([TODO](https://robot-see-robot-do.github.io/)). They consist of a multi-view scan in nerfstudio format, and a `.mp4` video of the input demonstration.
-
-### Custom data
-To capture your own objects, please first scan an object of interest as described [here](https://docs.nerf.studio/quickstart/custom_dataset.html).
 
 ### Training 4D-DPM
 4D-DPM consists of two overlaid models: a GARField and a dino-embedded gaussian model (which we call DiG)
@@ -82,51 +85,15 @@ After tracking executes you can visualize the 4D reconstruction in a viser windo
 In addition, the output folder you specified will contain:
 
 * `camopt_render.mp4`: a file showing an animation of the object pose initialization (including all random seeds)
-* `frame_opt.mp4`: an mp4 file showing the rendered object trajectory from the camera perspective, overlaid on top of the video like so:
+* `frame_opt.mp4`: an mp4 file showing the rendered object trajectory from the camera perspective.
 
-https://github.com/user-attachments/assets/343e0176-975e-4ece-b32e-20815b2053f0
-
-* `keyframes.txt`: a loadable representation of the tracked part poses
-
-### Running the robot visualizer
-For object-centric robot trajectory generation, you need to specify:
-* how many hands to use (`single` or `bimanual`), and
-* the initial object position, from which the robot will plan the part motion trajectory.
-
-There are two options to initialize the object position:
-1. Interactively set the object into an initial position, or
-2. (Requires [ZED SDK](https://www.stereolabs.com/developers/release)) Use an example ZED observation from the robot POV at [`data/robot_init_obs`](https://github.com/kerrj/rsrd/tree/main/data/robot_init_obs).
-
-```
-usage: run_planner.py [-h] --hand-mode {single,bimanual} --track-dir PATH [--zed-video-path {None}|PATH]
-
-╭─ options ───────────────────────────────────────────────╮
-│ -h, --help              show this help message and exit │
-│ --hand-mode {single,bimanual}                           │
-│                         (required)                      │
-│ --track-dir PATH        (required)                      │
-│ --zed-video-path {None}|PATH                            │
-│                         (default: None)                 │
-╰─────────────────────────────────────────────────────────╯
-```
-Set `--track-dir` to `--output-dir` as specified from `run_tracker.py`.
-
-If you don't provide `--zed-video-path` (option 1), you need to drag the object into a desired location, fix the object location (unclick "Move object") and click "Generate Trajectory". Otherwise, the script will start trajectory generation immediately after the object is registered into the workspace.
-
-https://github.com/user-attachments/assets/d316d48e-4ff7-44f3-89d2-6a65411ac902
-
-Example output: 
-
-https://github.com/user-attachments/assets/c0a606a1-0ccf-4c2b-b4a4-c20df8e1d2c2
-
-For option 1, you can now un-click "Move Object" to re-generate trajectories from a new object pose, or click "Generate Trajectory" again for more.
+* `keyframes.json`: a loadable representation of the tracked part poses
 
 
-## Bibtex
-If you find this useful, please cite the paper!
-<pre id="codecell0">@inproceedings{kerr2024rsrd,
-&nbsp;title={Robot See Robot Do: Imitating Articulated Object Manipulation with Monocular 4D Reconstruction},
-&nbsp;author={Justin Kerr and Chung Min Kim and Mingxuan Wu and Brent Yi and Qianqian Wang and Ken Goldberg and Angjoo Kanazawa},
-&nbsp;booktitle={8th Annual Conference on Robot Learning},
-&nbsp;year = {2024},
-} </pre>
+## Running Baseline Test
+
+1. Untar the dataset in the project directory.
+2. Run `preprocess_scan.py` to prepare the `transforms.json` in the scan data directory. You need to modify the path in the script according to your file path.
+3. Run `reconstruction.py` to reconstruct 3DGS and compute DINO feature for each object. You may need to modify the file path in the script according to your file path.
+4. Segment and cluster the object in the nerfstudio viewer as shown in the previous section.
+5. Run `tracking.py` to recover 3D motion of each part. You may need to modify the file path in the script according to you file path.
