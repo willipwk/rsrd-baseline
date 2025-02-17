@@ -157,77 +157,77 @@ def main(
     # Before visualizing, reset colors...
     optimizer.reset_transforms()
 
-    server = viser.ViserServer()
-    viser_rsrd = ViserRSRD(
-        server, optimizer, root_node_name="/object", show_finger_keypoints=False
-    )
+    # server = viser.ViserServer()
+    # viser_rsrd = ViserRSRD(
+    #     server, optimizer, root_node_name="/object", show_finger_keypoints=False
+    # )
 
-    height, width = camera_intr_type.height, camera_intr_type.width
-    aspect = height / width
+    # height, width = camera_intr_type.height, camera_intr_type.width
+    # aspect = height / width
 
-    camera_handle = server.scene.add_camera_frustum(
-        "camera",
-        fov=80,
-        aspect=width / height,
-        scale=0.1,
-        position=T_cam_obj.translation().detach().cpu().numpy().squeeze(),
-        wxyz=T_cam_obj.rotation().wxyz.detach().cpu().numpy().squeeze(),
-    )
-    @camera_handle.on_click
-    def _(event: viser.GuiEvent):
-        client = event.client
-        if client is None:
-            return
-        client.camera.position = T_cam_obj.translation().detach().cpu().numpy().squeeze()
-        client.camera.wxyz = T_cam_obj.rotation().wxyz.detach().cpu().numpy().squeeze()
+    # camera_handle = server.scene.add_camera_frustum(
+    #     "camera",
+    #     fov=80,
+    #     aspect=width / height,
+    #     scale=0.1,
+    #     position=T_cam_obj.translation().detach().cpu().numpy().squeeze(),
+    #     wxyz=T_cam_obj.rotation().wxyz.detach().cpu().numpy().squeeze(),
+    # )
+    # @camera_handle.on_click
+    # def _(event: viser.GuiEvent):
+    #     client = event.client
+    #     if client is None:
+    #         return
+    #     client.camera.position = T_cam_obj.translation().detach().cpu().numpy().squeeze()
+    #     client.camera.wxyz = T_cam_obj.rotation().wxyz.detach().cpu().numpy().squeeze()
 
-    timesteps = len(optimizer.part_deltas)
-    track_slider = server.gui.add_slider("timestep", 0, timesteps - 1, 1, 0)
-    play_checkbox = server.gui.add_checkbox("play", True)
-    show_overlay_checkbox = server.gui.add_checkbox("Show Demo Vid (slow)", False)
+    # timesteps = len(optimizer.part_deltas)
+    # track_slider = server.gui.add_slider("timestep", 0, timesteps - 1, 1, 0)
+    # play_checkbox = server.gui.add_checkbox("play", True)
+    # show_overlay_checkbox = server.gui.add_checkbox("Show Demo Vid (slow)", False)
     
-    video_handle = server.gui.add_plotly(px.imshow(np.zeros((1, 1, 3))), aspect)
-    overlay_handle = server.gui.add_plotly(px.imshow(np.zeros((1, 1, 3))), aspect)
+    # video_handle = server.gui.add_plotly(px.imshow(np.zeros((1, 1, 3))), aspect)
+    # overlay_handle = server.gui.add_plotly(px.imshow(np.zeros((1, 1, 3))), aspect)
 
-    while True:
-        if play_checkbox.value:
-            track_slider.value = (track_slider.value + 1) % timesteps
-        tstep = track_slider.value
-        vid_frame = get_vid_frame(video, frame_idx=tstep)
-        part_deltas = optimizer.part_deltas[tstep]
-        viser_rsrd.update_cfg(part_deltas)
-        viser_rsrd.update_hands(tstep)
-        camera_handle = server.scene.add_camera_frustum(
-            "camera",
-            fov=80,
-            aspect=width / height,
-            scale=0.05,
-            position=T_cam_obj.translation().detach().cpu().numpy().squeeze(),
-            wxyz=T_cam_obj.rotation().wxyz.detach().cpu().numpy().squeeze(),
-            image = vid_frame
-        )
-        if show_overlay_checkbox.value:
-            video_handle.visible = True
-            overlay_handle.visible = True
-            fig = px.imshow(vid_frame)
-            fig.update_layout(
-                margin=dict(l=0, r=0, t=0, b=0),
-                xaxis=dict(visible=False),
-                yaxis=dict(visible=False),
-            )
-            video_handle.figure = fig
+    # while True:
+    #     if play_checkbox.value:
+    #         track_slider.value = (track_slider.value + 1) % timesteps
+    #     tstep = track_slider.value
+    #     vid_frame = get_vid_frame(video, frame_idx=tstep)
+    #     part_deltas = optimizer.part_deltas[tstep]
+    #     viser_rsrd.update_cfg(part_deltas)
+    #     viser_rsrd.update_hands(tstep)
+    #     camera_handle = server.scene.add_camera_frustum(
+    #         "camera",
+    #         fov=80,
+    #         aspect=width / height,
+    #         scale=0.05,
+    #         position=T_cam_obj.translation().detach().cpu().numpy().squeeze(),
+    #         wxyz=T_cam_obj.rotation().wxyz.detach().cpu().numpy().squeeze(),
+    #         image = vid_frame
+    #     )
+    #     if show_overlay_checkbox.value:
+    #         video_handle.visible = True
+    #         overlay_handle.visible = True
+    #         fig = px.imshow(vid_frame)
+    #         fig.update_layout(
+    #             margin=dict(l=0, r=0, t=0, b=0),
+    #             xaxis=dict(visible=False),
+    #             yaxis=dict(visible=False),
+    #         )
+    #         video_handle.figure = fig
 
-            fig = px.imshow(vid_frame)
-            fig.update_layout(
-                margin=dict(l=0, r=0, t=0, b=0),
-                xaxis=dict(visible=False),
-                yaxis=dict(visible=False),
-            )
-            overlay_handle.figure = fig
-        else:
-            video_handle.visible = False
-            overlay_handle.visible = False
-            time.sleep(1/30)
+    #         fig = px.imshow(vid_frame)
+    #         fig.update_layout(
+    #             margin=dict(l=0, r=0, t=0, b=0),
+    #             xaxis=dict(visible=False),
+    #             yaxis=dict(visible=False),
+    #         )
+    #         overlay_handle.figure = fig
+    #     else:
+    #         video_handle.visible = False
+    #         overlay_handle.visible = False
+    #         time.sleep(1/30)
 
 
 def render_video(
