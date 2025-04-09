@@ -6,7 +6,7 @@ import os
 import glob
 
 
-intrinsics_path = "path/to/any/intrinsics.npy" # all the intrinsics are the same
+intrinsics_path = "data/partnet_mobility/Table/23372/joint_1_bg/view_1/intrinsics.npy" # all the intrinsics are the same
 intrinsics = np.load(intrinsics_path)
 fl_x = float(intrinsics[0, 0])
 fl_y = float(intrinsics[1, 1])
@@ -14,12 +14,15 @@ cx = float(intrinsics[0, 2])
 cy = float(intrinsics[1, 2])
 w = 640
 h = 480
-sapien_scan_dir = glob.glob("path/to/view_init_rsrd")
+# sapien_scan_dir = glob.glob("path/to/view_init_rsrd")
+sapien_scan_dir = glob.glob("data/partnet_mobility/*/*/joint_[0-9]_bg/view_init_rsrd")
 for sapien_scan in sapien_scan_dir:
     # init pc
     surface_img = []
     surface_xyz = []
-    for i in range(24):
+    rgb_dir = f"{sapien_scan}/rgb"
+    rgb_len = len(os.listdir(rgb_dir))
+    for i in range(rgb_len):
         img = cv2.imread("{}/rgb/{}".format(sapien_scan, "%06d.png" % i))
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         surface_img.append(img)
