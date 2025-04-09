@@ -162,3 +162,5 @@ cython_debug/
 
 data/demonstrations/
 data/scans/
+data/partnet_mobility
+data/real_scan
